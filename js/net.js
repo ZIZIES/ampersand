@@ -24,7 +24,7 @@ export function encodeCode(desc) {
 }
 export function decodeCode(code) {
   code = code.trim();
-  if (!code.startsWith('CHS1.')) throw new Error('not a chess code (expecting CHS1.…)');
+  if (!code.startsWith('CHS1.')) throw new Error('not an ampersand code (expecting CHS1.…)');
   const obj = JSON.parse(new TextDecoder().decode(fromB64(code.slice(5))));
   return { type: obj.t, sdp: obj.s };
 }
