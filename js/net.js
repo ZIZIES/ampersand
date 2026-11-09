@@ -1,5 +1,5 @@
 // manual webrtc: offer/answer encoded as copy-pasteable codes, one data channel.
-// no signaling server — the codes ARE the signaling.
+// no signaling server. the codes ARE the signaling.
 
 const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 const GATHER_TIMEOUT_MS = 2500;

@@ -52,7 +52,7 @@ export class Engine {
 
   // returns { bestmove: 'e2e4' | null, score: {type:'cp'|'mate', value} (side to move's view), pv, depth }
   // opts: movetime (ms), depth, elo (null = full strength), tag (for stop()), onInfo(info),
-  //       skipIf() — checked when the search reaches the front of the queue; true = resolve null
+  //       skipIf(): checked when the search reaches the front of the queue; true = resolve null
   search(fen, opts = {}) {
     const job = this.queue.then(() => this.#run(fen, opts));
     this.queue = job.catch(() => {});

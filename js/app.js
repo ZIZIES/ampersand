@@ -120,14 +120,14 @@ const local = (() => {
       el.dataset.turn = '';
       return;
     }
-    el.textContent = `${colorName(game.turn())} to move${game.inCheck() ? ' — check!' : ''}`;
+    el.textContent = `${colorName(game.turn())} to move${game.inCheck() ? ' · check!' : ''}`;
     el.className = 'status';
     el.dataset.turn = game.turn();
   }
 
   function finish(winner, reason, kind = 'board') {
     const title = winner ? `${colorName(winner)} wins` : 'draw';
-    over = { text: `${title} — ${reason}`, kind };
+    over = { text: `${title} · ${reason}`, kind };
     clock.stop();
     board.showResult(title, reason);
     status();
@@ -157,7 +157,7 @@ const local = (() => {
 
   $('#local-new').addEventListener('click', newGame);
   $('#local-undo').addEventListener('click', () => {
-    if (over?.kind === 'time') return toast("time's up — start a new game");
+    if (over?.kind === 'time') return toast("time's up, start a new game");
     const m = game.undo();
     if (!m) return;
     over = null;
@@ -205,7 +205,7 @@ const net = (() => {
   let tcStr = 'none';   // agreed time control (host decides, sent in 'hello')
   let graceTimer = null;
 
-  // the status line lives in the game panel, which is hidden during setup — toast it there too
+  // the status line lives in the game panel, which is hidden during setup, so toast it there too
   function setNetStatus(text, cls) {
     match.setStatus(text, cls);
     if ($('#net-game').hidden) toast(text);
@@ -266,7 +266,7 @@ const net = (() => {
           if (!match.game || match.over) return;
           clearTimeout(graceTimer);
           if (!match.receive({ from: m.from, to: m.to, promotion: m.promo }, m.clock)) {
-            toast('illegal move received — you two are desynced, rematch or rehost');
+            toast('illegal move received. you two are out of sync, rematch or rehost');
           }
           break;
         case 'flag':
@@ -298,10 +298,10 @@ const net = (() => {
     },
     onClose() {
       match.clock.stop();
-      setNetStatus('connection lost — make fresh codes to play again', 'err');
+      setNetStatus('connection lost. make fresh codes to play again', 'err');
     },
     onState(st) {
-      if (st === 'failed') setNetStatus('connection failed — your network might be blocking webrtc', 'err');
+      if (st === 'failed') setNetStatus('connection failed. your network might be blocking webrtc', 'err');
     },
   };
 
@@ -396,7 +396,7 @@ const bot = (() => {
   let thinkToken = 0;
   let evalToken = 0;
   let review = null;      // { hist, data, index } while the review panel is open
-  let reviewCache = null; // { pgn, data } — reopening review of the same game is instant
+  let reviewCache = null; // { pgn, data }; reopening review of the same game is instant
 
   const panels = { setup: $('#bot-setup'), play: $('#bot-play'), review: $('#bot-review') };
   function show(name) {
@@ -484,7 +484,7 @@ const bot = (() => {
       return;
     }
     if (token !== thinkToken || match.over || match.game !== g || g.fen() !== fen) return;
-    if (!mv || !match.receive(mv)) toast('the bot got confused — try a new game');
+    if (!mv || !match.receive(mv)) toast('the bot got confused, try a new game');
     syncButtons();
   }
   function cancelThink() {
@@ -527,7 +527,7 @@ const bot = (() => {
   $('#bot-takeback').addEventListener('click', () => {
     const g = match.game;
     if (!g) return;
-    if (match.over && /time/.test(match.result?.detail)) return toast("time's up — start a new game");
+    if (match.over && /time/.test(match.result?.detail)) return toast("time's up, start a new game");
     if (!g.history({ verbose: true }).some((m) => m.color === match.me)) return toast('nothing to take back');
     cancelThink();
     // back to your last move: 1 half-move if the bot hasn't answered yet, 2 if it has
@@ -571,7 +571,7 @@ const bot = (() => {
     try {
       const r = await analyst().search(fen, { depth: 16, movetime: 700, tag: 'eval', skipIf: () => id !== evalToken });
       if (r && id === evalToken) drawEval(toWhite(r.score, turn));
-    } catch { /* engine unavailable — leave the bar */ }
+    } catch { /* engine unavailable, leave the bar */ }
   }
 
   // ----- game review -----
@@ -698,7 +698,7 @@ const bot = (() => {
     if (i > 0) {
       const m = data.moves[i - 1];
       const moveNo = `${Math.floor((i - 1) / 2) + 1}${m.color === 'w' ? '.' : '…'} ${m.san}`;
-      text = `${moveNo} — ${LABEL[m.cls]}`;
+      text = `${moveNo} · ${LABEL[m.cls]}`;
       if (GLYPH[m.cls] && m.best) {
         const before = new Chess();
         for (let k = 0; k < i - 1; k++) before.move(hist[k]);

@@ -64,7 +64,7 @@ export async function botMove(fen, rating, { msLeft = null, inc = 0 } = {}) {
     const res = await botEngine().search(fen, { movetime, elo: max ? null : rating, tag: 'bot' });
     move = uciToMove(res.bestmove);
   }
-  // don't snap back instantly — feels more like a person (skipped for max)
+  // don't snap back instantly, it feels more like a person (skipped for max)
   if (rating < MAX_RATING) {
     let delay = 450 + Math.random() * 900;
     if (msLeft != null) delay = Math.min(delay, msLeft / 40);

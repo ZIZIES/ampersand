@@ -21,7 +21,7 @@ function fmt(ms) {
 }
 
 export class Clock {
-  // els: { w: element, b: element } — each gets the formatted time + .active/.low classes
+  // els: { w: element, b: element }; each gets the formatted time + .active/.low classes
   constructor(els, onFlag) {
     this.els = els;
     this.onFlag = onFlag;
@@ -48,7 +48,7 @@ export class Clock {
   }
 
   // `c` just finished a move: bank their time + increment, start the opponent.
-  // the very first move of the game doesn't touch white's clock — it starts black's.
+  // the very first move of the game doesn't touch white's clock. it starts black's.
   moved(c) {
     if (!this.tc) return;
     if (this.running === c) this.time[c] = this.left(c) + this.tc.inc;

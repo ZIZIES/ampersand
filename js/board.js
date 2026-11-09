@@ -101,7 +101,7 @@ export class Board {
     this.game = null;
     this.orientation = 'w';
     this.movable = () => null; // color the user may move right now, or null
-    this.onMove = null;        // (move) => void — after a user move (or premove) is applied
+    this.onMove = null;        // (move) => void, after a user move (or premove) is applied
     this.onPremove = null;     // (premove | null) => void
 
     this.selected = null;
@@ -149,7 +149,7 @@ export class Board {
     this.premove = null;
     let mv = null;
     if (pm && this.#mode() === 'move') {
-      try { mv = this.game.move(pm); } catch { /* no longer legal — dropped */ }
+      try { mv = this.game.move(pm); } catch { /* no longer legal, dropped */ }
     }
     if (pm) this.onPremove?.(null);
     const anims = mv ? [...extra.filter((a) => a.to !== mv.to), ...animsFor(mv)] : extra;
@@ -201,7 +201,7 @@ export class Board {
 
   render({ animate = [] } = {}) {
     // anything that redraws the board (takeback, flip, timeout, opponent move) invalidates an open
-    // promotion picker — close it, which cancels that move
+    // promotion picker: close it, which cancels that move
     if (this.busy) this.layer.querySelector('.promo')?.click();
     const g = this.game;
     if (!g) return;
@@ -567,5 +567,5 @@ export function outcome(game) {
 export function resultText(game) {
   const o = outcome(game);
   if (!o) return null;
-  return o.winner ? `${o.winner === 'w' ? 'white' : 'black'} wins by ${o.reason}` : `draw — ${o.reason}`;
+  return o.winner ? `${o.winner === 'w' ? 'white' : 'black'} wins by ${o.reason}` : `draw by ${o.reason}`;
 }

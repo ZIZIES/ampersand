@@ -245,7 +245,7 @@ textarea::placeholder { color: var(--faint); }
 textarea:focus { border-color: var(--accent); outline: none; }
 textarea[readonly] { color: var(--dim); }
 
-/* status line — dot shows whose turn it is (data-turn) or the outcome */
+/* status line: dot shows whose turn it is (data-turn) or the outcome */
 .status {
   display: flex;
   align-items: center;
@@ -339,7 +339,7 @@ textarea[readonly] { color: var(--dim); }
 .sq.dot::after { inset: 36%; background: rgba(0, 0, 0, .16); }
 .sq.cap::after { inset: 3%; border: 5px solid rgba(0, 0, 0, .16); }
 
-/* pieces — one svg per piece, used by board squares, the drag ghost and the promotion picker */
+/* pieces: one svg per piece, used by board squares, the drag ghost and the promotion picker */
 .pc, .drag-ghost, .promo-pc { background: center / 100% no-repeat; }
 .pc {
   position: absolute;
@@ -361,7 +361,7 @@ textarea[readonly] { color: var(--dim); }
 .bN { background-image: url(pieces/bN.svg); }
 .bP { background-image: url(pieces/bP.svg); }
 
-/* the piece under your cursor while dragging — "lifts" off the board */
+/* the piece under your cursor while dragging. it "lifts" off the board */
 .drag-ghost {
   position: fixed;
   left: 0;

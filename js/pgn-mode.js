@@ -27,7 +27,7 @@ export function initPGN(notify) {
     // position label
     let label = viewIndex === 0 ? 'start position' : `${Math.floor(viewIndex / 2) + 1}${viewIndex % 2 ? '.' : '...'} ${last.san}`;
     const over = resultText(g);
-    if (over) label += ' — ' + over;
+    if (over) label += ' · ' + over;
     $('#pgn-pos').textContent = label;
 
     // move list highlight
@@ -112,7 +112,7 @@ export function initPGN(notify) {
       await navigator.clipboard.writeText(master.pgn());
       notify('pgn copied');
     } catch {
-      notify('clipboard blocked — select the pgn box manually');
+      notify('clipboard blocked, select the pgn box manually');
     }
   });
 

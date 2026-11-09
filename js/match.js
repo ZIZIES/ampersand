@@ -1,4 +1,4 @@
-// one game where you play one color and the other side's moves arrive on their own —
+// one game where you play one color and the other side's moves arrive on their own:
 // a friend over webrtc (online mode) or the computer (bot mode). owns the game, clock,
 // status line, result card and premove hand-off; the mode wires up the hooks.
 import { Chess } from 'chess.js';
@@ -18,11 +18,11 @@ export class Match {
     this.themName = 'opponent';
     this.waitText = "opponent's move";
 
-    this.onMyMove = null;  // (move) => void — after your move (or premove) is on the board
-    this.onMyFlag = null;  // () => void — your clock ran out
-    this.onOppFlag = null; // (color) => void — their clock ran out; default: they lose right away
+    this.onMyMove = null;  // (move) => void, after your move (or premove) is on the board
+    this.onMyFlag = null;  // () => void, your clock ran out
+    this.onOppFlag = null; // (color) => void, their clock ran out; default: they lose right away
     this.onEnd = null;     // (result) => void
-    this.onChange = null;  // () => void — any position change
+    this.onChange = null;  // () => void, any position change
 
     board.movable = () => (this.game && !this.over ? this.me : null);
     board.onPremove = () => this.renderStatus();
@@ -109,7 +109,7 @@ export class Match {
     this.board.premove = null;
     this.col.querySelectorAll('.bar').forEach((b) => b.classList.remove('turn'));
     this.board.showResult(title, detail);
-    this.setStatus(`${title} — ${detail}`, cls);
+    this.setStatus(`${title} · ${detail}`, cls);
     this.onEnd?.(this.result);
   }
 
@@ -148,8 +148,8 @@ export class Match {
     const t = this.game.turn();
     this.col.querySelector('.bar-w').classList.toggle('turn', t === 'w');
     this.col.querySelector('.bar-b').classList.toggle('turn', t === 'b');
-    let s = t === this.me ? 'your move' : this.board.premove ? 'premove set — right-click to cancel' : this.waitText;
-    if (this.game.inCheck()) s += ' — check!';
+    let s = t === this.me ? 'your move' : this.board.premove ? 'premove set, right-click to cancel' : this.waitText;
+    if (this.game.inCheck()) s += ' · check!';
     this.setStatus(s, '', t);
   }
 }
