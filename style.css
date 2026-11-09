@@ -10,16 +10,23 @@
   --text: #ece9e3;
   --dim: #9b968e;
   --faint: #6c6861;
-  --accent: #8cb35c;
-  --accent-hover: #9cc46b;
-  --on-accent: #14170f;
   --err: #e0705f;
-  --sq-light: #f2e6d9;
-  --sq-dark: #d0806a;
+  --good: #8cb35c;          /* wins, connected, best move: stays green whatever the theme */
   --radius: 12px;
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
 }
+
+/* board themes: square colors + an accent (buttons, toggles, active tab...) that matches the board.
+   <html data-theme> picks the page's theme; each settings swatch has its own data-theme to show its colors.
+   text on the accent (--on-accent) is at least 6.5:1 contrast for every theme. no attribute = coral. */
+:root,
+[data-theme="coral"]  { --sq-light: #f2e6d9; --sq-dark: #d0806a; --accent: #e58f6f; --accent-hover: #ec9f82; --on-accent: #1f120c; }
+[data-theme="green"]  { --sq-light: #ebecd0; --sq-dark: #739552; --accent: #8cb35c; --accent-hover: #9cc46b; --on-accent: #14170f; }
+[data-theme="brown"]  { --sq-light: #f0d9b5; --sq-dark: #b58863; --accent: #cfa072; --accent-hover: #dab084; --on-accent: #1c140c; }
+[data-theme="blue"]   { --sq-light: #dee3e6; --sq-dark: #8ca2ad; --accent: #72aed0; --accent-hover: #86bbd9; --on-accent: #0d171d; }
+[data-theme="slate"]  { --sq-light: #d3d8de; --sq-dark: #6f7b8b; --accent: #95a3b8; --accent-hover: #a5b2c5; --on-accent: #12161c; }
+[data-theme="purple"] { --sq-light: #e9e3f2; --sq-dark: #8f7bb5; --accent: #a98fd6; --accent-hover: #b8a1de; --on-accent: #17121f; }
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -267,8 +274,8 @@ textarea[readonly] { color: var(--dim); }
 }
 .status[data-turn="w"]::before { background: #f4f3ee; }
 .status[data-turn="b"]::before { background: #0e0e0d; box-shadow: 0 0 0 1.5px #6c6861; }
-.status.ok { color: var(--accent); }
-.status.ok::before { background: var(--accent); }
+.status.ok { color: var(--good); }
+.status.ok::before { background: var(--good); }
 .status.err { color: var(--err); }
 .status.err::before { background: var(--err); }
 .status.pos { font-family: var(--mono); font-size: 13px; color: var(--dim); }
@@ -780,7 +787,7 @@ textarea[readonly] { color: var(--dim); }
 .status.pos.blunder { color: #e5484d; }
 .status.pos.mistake { color: #f2a33a; }
 .status.pos.inaccuracy { color: #e8c547; }
-.status.pos.best { color: var(--accent); }
+.status.pos.best { color: var(--good); }
 
 /* ---------- settings drawer ---------- */
 
@@ -863,14 +870,13 @@ textarea[readonly] { color: var(--dim); }
   border: 2px solid transparent;
   border-radius: 9px;
   padding: 0;
-  background: conic-gradient(var(--d) 0 25%, var(--l) 0 50%, var(--d) 0 75%, var(--l) 0) 0 0 / 100% 100%;
+  background: conic-gradient(var(--sq-dark) 0 25%, var(--sq-light) 0 50%, var(--sq-dark) 0 75%, var(--sq-light) 0) 0 0 / 100% 100%;
   background-clip: padding-box;
   cursor: pointer;
   outline-offset: 2px;
 }
 .swatch[aria-pressed="true"] { border-color: var(--text); }
 
-#setup-again { align-self: flex-start; }
 
 /* ---------- first-visit setup ---------- */
 

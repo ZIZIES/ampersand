@@ -10,6 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // put the saved board theme on <html> before the first paint so it doesn't flash coral (js/settings.js keeps it in sync)
+    try { document.documentElement.dataset.theme = JSON.parse(localStorage.getItem('chess.settings.v1') || '{}').theme || 'coral'; } catch { /* storage blocked */ }
+  </script>
   <script type="importmap">
     { "imports": { "chess.js": "https://cdn.jsdelivr.net/npm/chess.js@1/+esm" } }
   </script>
@@ -347,7 +351,11 @@
     </div>
 
     <div class="group">
-      <button id="setup-again" class="btn"><svg class="ic"><use href="#i-rematch"/></svg>run setup again</button>
+      <div class="btns">
+        <button id="setup-again" class="btn"><svg class="ic"><use href="#i-rematch"/></svg>run setup again</button>
+        <button id="settings-reset" class="btn danger"><svg class="ic"><use href="#i-undo"/></svg><span class="t">reset settings</span></button>
+      </div>
+      <p class="hint">reset puts every setting back to its default and shows the setup again.</p>
     </div>
   </aside>
 

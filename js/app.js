@@ -6,7 +6,7 @@ import { Clock, TIME_CONTROLS, parseTC } from './clock.js';
 import { Match } from './match.js';
 import { MIN_RATING, MAX_RATING, botMove, stopBot, analyst, analyseGame, terminalScore, botName, describe } from './bot.js';
 import { toWhite, winPct, fmtScore, uciToMove } from './engine.js';
-import { settings, setSetting, onSetting, applyTheme, THEMES } from './settings.js';
+import { settings, setSetting, onSetting, applyTheme, resetSettings, THEMES } from './settings.js';
 
 const $ = (s) => document.querySelector(s);
 const colorName = (c) => (c === 'w' ? 'white' : 'black');
@@ -787,15 +787,13 @@ const bot = (() => {
   });
 
   for (const box of [$('#themes'), $('#setup-themes')]) {
-    box.replaceChildren(...Object.entries(THEMES).map(([name, t]) => {
+    box.replaceChildren(...THEMES.map((name) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'swatch';
       b.dataset.theme = name;
       b.title = name;
       b.setAttribute('aria-label', name + ' board');
-      b.style.setProperty('--l', t.light);
-      b.style.setProperty('--d', t.dark);
       b.addEventListener('click', () => setSetting('theme', name));
       return b;
     }));
@@ -863,6 +861,8 @@ const bot = (() => {
   dlg.addEventListener('cancel', (e) => { e.preventDefault(); finish(); }); // escape = skip
   dlg.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => finish(b.dataset.go)));
   $('#setup-again').addEventListener('click', () => { $('#settings-close').click(); open(); });
+  // click twice ("sure?"); reloading is the simplest way to put every control back to its default
+  confirmButton($('#settings-reset'), () => { resetSettings(); location.reload(); });
 
   if (!settings.setupDone) open();
 }

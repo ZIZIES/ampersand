@@ -2,14 +2,9 @@
 
 const KEY = 'chess.settings.v1';
 
-export const THEMES = {
-  coral:  { light: '#f2e6d9', dark: '#d0806a' },
-  green:  { light: '#ebecd0', dark: '#739552' },
-  brown:  { light: '#f0d9b5', dark: '#b58863' },
-  blue:   { light: '#dee3e6', dark: '#8ca2ad' },
-  slate:  { light: '#d3d8de', dark: '#6f7b8b' },
-  purple: { light: '#e9e3f2', dark: '#8f7bb5' },
-};
+// board themes. the colors (squares + a matching accent for buttons etc) live in style.css under
+// [data-theme="name"]; index.html sets the saved one on <html> before the first paint.
+export const THEMES = ['coral', 'green', 'brown', 'blue', 'slate', 'purple'];
 
 const DEFAULTS = {
   autoQueen: false,     // skip the promotion picker
@@ -51,7 +46,10 @@ export function setSetting(key, value) {
 export function onSetting(fn) { subs.add(fn); }
 
 export function applyTheme() {
-  const t = THEMES[settings.theme] || THEMES.coral;
-  document.documentElement.style.setProperty('--sq-light', t.light);
-  document.documentElement.style.setProperty('--sq-dark', t.dark);
+  document.documentElement.dataset.theme = THEMES.includes(settings.theme) ? settings.theme : THEMES[0];
+}
+
+// forget everything saved. the caller reloads the page, which then starts like a first visit.
+export function resetSettings() {
+  try { localStorage.removeItem(KEY); } catch { /* private mode etc */ }
 }
