@@ -771,33 +771,98 @@ const bot = (() => {
     if (e.key === 'Escape' && drawer.classList.contains('open')) open(false);
   });
 
-  drawer.querySelectorAll('input[data-setting]').forEach((input) => {
+  // the setup dialog shows some of the same toggles: copy them from the drawer so the wording lives in one place
+  $('#setup').querySelectorAll('[data-toggles]').forEach((box) => {
+    box.replaceChildren(...box.dataset.toggles.split(' ').map((key) =>
+      drawer.querySelector(`input[data-setting="${key}"]`).closest('label').cloneNode(true)));
+  });
+
+  // every toggle for a key (drawer + setup) stays in sync
+  const syncToggles = (key) => document.querySelectorAll(`input[data-setting="${key}"]`).forEach((input) => {
+    input.checked = !!settings[key];
+  });
+  document.querySelectorAll('input[data-setting]').forEach((input) => {
     input.checked = !!settings[input.dataset.setting];
     input.addEventListener('change', () => setSetting(input.dataset.setting, input.checked));
   });
 
-  const themes = $('#themes');
-  themes.replaceChildren(...Object.entries(THEMES).map(([name, t]) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'swatch';
-    b.dataset.theme = name;
-    b.title = name;
-    b.setAttribute('aria-label', name + ' board');
-    b.style.setProperty('--l', t.light);
-    b.style.setProperty('--d', t.dark);
-    b.addEventListener('click', () => setSetting('theme', name));
-    return b;
-  }));
-  const syncThemes = () => themes.querySelectorAll('.swatch').forEach((b) => {
+  for (const box of [$('#themes'), $('#setup-themes')]) {
+    box.replaceChildren(...Object.entries(THEMES).map(([name, t]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.dataset.theme = name;
+      b.title = name;
+      b.setAttribute('aria-label', name + ' board');
+      b.style.setProperty('--l', t.light);
+      b.style.setProperty('--d', t.dark);
+      b.addEventListener('click', () => setSetting('theme', name));
+      return b;
+    }));
+  }
+  const syncThemes = () => document.querySelectorAll('.swatch').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.theme === settings.theme));
   });
   syncThemes();
 
   onSetting((key) => {
+    syncToggles(key);
     if (key === 'theme') syncThemes();
     if (key === 'autoFlip' && settings.autoFlip) local.faceSideToMove(0);
     if (key === 'evalBar') bot.refreshEval();
     if (['showLegal', 'coords', 'castleOnRook', 'premoves'].includes(key)) boards.forEach((b) => b.render());
   });
+}
+
+// ---------- first-visit setup ----------
+// a few steps over the main settings, shown once. skip (or escape) keeps the defaults.
+{
+  const dlg = $('#setup');
+  const steps = [...dlg.querySelectorAll('.step')];
+  const dots = dlg.querySelector('.steps');
+  dots.replaceChildren(...steps.map(() => document.createElement('i')));
+  let at = 0;
+
+  // a free-play board to try the colors and moving on; both sides are yours
+  const preview = new Board($('#setup-board'));
+  preview.movable = () => (preview.game.isGameOver() ? null : preview.game.turn());
+  onSetting(() => { if (dlg.open) preview.render(); });
+
+  function show(n) {
+    at = Math.max(0, Math.min(steps.length - 1, n));
+    steps.forEach((s, i) => { s.hidden = i !== at; });
+    [...dots.children].forEach((d, i) => d.classList.toggle('on', i <= at));
+    const last = at === steps.length - 1;
+    $('#setup-back').hidden = at === 0;
+    $('#setup-next').hidden = last;
+    $('#setup-skip').hidden = last;
+    $('#setup-next .t').textContent = at === 0 ? "let's go" : 'next';
+    if (steps[at].dataset.step === 'board') preview.render();
+    dlg.scrollTop = 0;
+    (last ? dlg.querySelector('.start') : $('#setup-next')).focus();
+  }
+
+  function open() {
+    preview.game = new Chess();
+    preview.reset();
+    preview.render();
+    dlg.showModal();
+    show(0);
+  }
+
+  function finish(tab) {
+    setSetting('setupDone', true);
+    preview.reset(); // drops a half-finished drag or an open promotion picker
+    dlg.close();
+    if (tab) $(`nav [data-tab="${tab}"]`).click();
+  }
+
+  $('#setup-next').addEventListener('click', () => show(at + 1));
+  $('#setup-back').addEventListener('click', () => show(at - 1));
+  $('#setup-skip').addEventListener('click', () => finish());
+  dlg.addEventListener('cancel', (e) => { e.preventDefault(); finish(); }); // escape = skip
+  dlg.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => finish(b.dataset.go)));
+  $('#setup-again').addEventListener('click', () => { $('#settings-close').click(); open(); });
+
+  if (!settings.setupDone) open();
 }

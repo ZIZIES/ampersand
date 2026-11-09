@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#739552"/>
+  <rect width="32" height="32" rx="8" fill="#d0806a"/>
   <!-- knight: lucide chess-knight (ISC) -->
-  <g transform="translate(6 6) scale(.8333)" fill="none" stroke="#ebecd0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(6 6) scale(.8333)" fill="none" stroke="#f2e6d9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
     <path d="M5 20a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/>
     <path d="M16.5 18c1-2 2.5-5 2.5-9a7 7 0 0 0-7-7H6.635a1 1 0 0 0-.768 1.64L7 5l-2.32 5.802a2 2 0 0 0 .95 2.526l2.87 1.456"/>
     <path d="m15 5 1.425-1.425"/>

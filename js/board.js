@@ -479,7 +479,8 @@ export class Board {
       d.ghost = document.createElement('div');
       d.ghost.className = 'drag-ghost ' + pieceClass(piece);
       d.ghost.style.width = d.ghost.style.height = d.size + 'px';
-      document.body.appendChild(d.ghost);
+      // inside a modal <dialog> (the setup preview) the page body is drawn underneath it
+      (this.el.closest('dialog') || document.body).appendChild(d.ghost);
       this.sqEls.get(d.from)?.querySelector('.pc')?.classList.add('ghost');
       this.el.classList.add('dragging');
     }

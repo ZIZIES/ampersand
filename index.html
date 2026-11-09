@@ -305,7 +305,7 @@
         <input type="checkbox" data-setting="autoFlip">
       </label>
       <label class="toggle">
-        <span><b>premoves</b><small>move during your opponent's turn online. it plays the instant they move</small></span>
+        <span><b>premoves</b><small>move during your opponent's turn. it plays the instant they move</small></span>
         <input type="checkbox" data-setting="premoves">
       </label>
       <label class="toggle">
@@ -345,7 +345,78 @@
         <dt>left-click</dt><dd>clear arrows</dd>
       </dl>
     </div>
+
+    <div class="group">
+      <button id="setup-again" class="btn"><svg class="ic"><use href="#i-rematch"/></svg>run setup again</button>
+    </div>
   </aside>
+
+  <!-- first-visit setup. the toggles are copied in from the settings drawer by app.js -->
+  <dialog id="setup" class="setup" aria-labelledby="setup-title">
+    <div class="setup-head">
+      <div class="steps" aria-hidden="true"></div>
+      <button id="setup-skip" type="button" class="btn ghost small">skip setup</button>
+    </div>
+
+    <section class="step" data-step="welcome">
+      <span class="mark big"><svg class="ic"><use href="#i-knight"/></svg></span>
+      <h2 id="setup-title">welcome to ampersand</h2>
+      <p class="lead">chess in your browser. play someone on this screen, a friend online, or a bot from beginner all the way up to full stockfish.</p>
+      <p class="hint">a few quick choices and you're in. you can change any of it later from the gear in the top right.</p>
+    </section>
+
+    <section class="step" data-step="board" hidden>
+      <div>
+        <h2>pick a board</h2>
+        <p class="hint">go ahead and move some pieces around.</p>
+      </div>
+      <div id="setup-board" class="board setup-board"></div>
+      <div id="setup-themes" class="themes" role="group" aria-label="board colors"></div>
+      <div class="toggles" data-toggles="coords"></div>
+    </section>
+
+    <section class="step" data-step="moves" hidden>
+      <div>
+        <h2>moving pieces</h2>
+        <p class="hint">drag or click to move. right-drag draws arrows.</p>
+      </div>
+      <div class="toggles" data-toggles="showLegal animate autoQueen castleOnRook"></div>
+    </section>
+
+    <section class="step" data-step="play" hidden>
+      <div>
+        <h2>playing a game</h2>
+        <p class="hint">these only matter in some modes.</p>
+      </div>
+      <div class="toggles" data-toggles="premoves autoFlip evalBar"></div>
+    </section>
+
+    <section class="step" data-step="done" hidden>
+      <div>
+        <h2>you're all set</h2>
+        <p class="hint">where do you want to start?</p>
+      </div>
+      <div class="starts">
+        <button type="button" class="start" data-go="local">
+          <svg class="ic"><use href="#i-users"/></svg>
+          <span><b>on this device</b><small>two players, one screen</small></span>
+        </button>
+        <button type="button" class="start" data-go="bot">
+          <svg class="ic"><use href="#i-bot"/></svg>
+          <span><b>against a bot</b><small>beginner up to full stockfish</small></span>
+        </button>
+        <button type="button" class="start" data-go="online">
+          <svg class="ic"><use href="#i-globe"/></svg>
+          <span><b>with a friend online</b><small>swap a code, no account needed</small></span>
+        </button>
+      </div>
+    </section>
+
+    <div class="setup-foot">
+      <button id="setup-back" type="button" class="btn ghost"><svg class="ic"><use href="#i-prev"/></svg>back</button>
+      <button id="setup-next" type="button" class="btn primary"><span class="t">next</span><svg class="ic"><use href="#i-next"/></svg></button>
+    </div>
+  </dialog>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script type="module" src="js/app.js"></script>
