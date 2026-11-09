@@ -1,6 +1,6 @@
 # chess
 
-play it: **https://zizies.github.io/chess/**
+play it: **https://zizies.github.io/ampersand/**
 
 static page, no build step. plain js + es modules. hosted on github pages straight from `main` (the empty `.nojekyll` file tells pages to serve the files as-is).
 
