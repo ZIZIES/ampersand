@@ -92,6 +92,7 @@ p { margin: 0; }
 .mark .ic { width: 20px; height: 20px; }
 
 .tabs {
+  position: relative;
   margin-left: auto;
   display: flex;
   gap: 2px;
@@ -122,8 +123,24 @@ p { margin: 0; }
   box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
 }
 .tabs button.active .ic { color: var(--accent); }
+/* sliding highlight behind the active tab, moved by js/app.js. without js the active button paints its own */
+.tabs button { position: relative; z-index: 1; }
+.tabs .pill {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 0;
+  height: calc(100% - 6px);
+  border-radius: 7px;
+  background: var(--raised);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  pointer-events: none;
+}
+.tabs.has-pill button.active { background: none; box-shadow: none; }
+.tabs.pill-ready .pill { transition: translate .35s cubic-bezier(.2, .8, .3, 1), width .35s cubic-bezier(.2, .8, .3, 1); }
 .tabs button:disabled { color: var(--faint); cursor: default; }
-.gear .ic { width: 18px; height: 18px; color: var(--dim); }
+.gear .ic { width: 18px; height: 18px; color: var(--dim); transition: rotate .5s cubic-bezier(.2, .8, .3, 1); }
+.gear[aria-expanded="true"] .ic { rotate: 90deg; }
 @media (max-width: 520px) {
   .tabs { width: 100%; order: 3; margin-left: 0; }
   .gear { margin-left: auto; }
@@ -819,6 +836,13 @@ textarea[readonly] { color: var(--dim); }
   transition: transform .25s cubic-bezier(.2, .8, .3, 1), visibility 0s .25s;
 }
 .drawer.open { transform: none; visibility: visible; transition: transform .25s cubic-bezier(.2, .8, .3, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .drawer.open .group { animation: rise .4s cubic-bezier(.2, .8, .3, 1) backwards; }
+  .drawer.open .group:nth-child(3) { animation-delay: .04s; }
+  .drawer.open .group:nth-child(4) { animation-delay: .08s; }
+  .drawer.open .group:nth-child(5) { animation-delay: .12s; }
+}
+@keyframes rise { from { opacity: 0; translate: 0 10px; } }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .drawer-head h2 { font-size: 17px; }
 
@@ -880,22 +904,39 @@ textarea[readonly] { color: var(--dim); }
 
 /* ---------- first-visit setup ---------- */
 
+/* the <dialog> is a see-through full-screen layer and .setup-card is the visible box. only the card
+   moves (open/close/step animations); the board's drag ghost goes on the dialog itself, which never
+   gets a transform, so the piece under the cursor stays on the cursor even mid-animation */
 .setup {
-  width: min(440px, calc(100vw - 32px));
-  max-height: calc(100dvh - 32px);
-  padding: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  overflow: hidden;
+}
+.setup[open] { display: grid; place-items: center; }
+.setup::backdrop { background: rgba(0, 0, 0, .6); }
+.setup-card {
+  width: min(440px, 100%);
+  max-height: 100%;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--panel);
-  color: var(--text);
   box-shadow: 0 24px 64px rgba(0, 0, 0, .5);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-/* opacity only: a transform here would knock the drag ghost (position: fixed) off the cursor */
-.setup[open] { animation: setup-in .25s ease-out; }
-.setup::backdrop { background: rgba(0, 0, 0, .6); }
-@keyframes setup-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .setup[open] .setup-card { animation: setup-in .3s cubic-bezier(.2, .8, .3, 1); }
+  .setup[open]::backdrop { animation: fade .3s ease; }
+}
+@keyframes setup-in { from { opacity: 0; translate: 0 16px; scale: .97; } }
 
 .setup-head {
   position: sticky;
@@ -908,15 +949,16 @@ textarea[readonly] { color: var(--dim); }
   background: var(--panel);
 }
 .steps { display: flex; gap: 6px; }
-.steps i { width: 18px; height: 4px; border-radius: 99px; background: var(--line); transition: background .2s; }
+.steps i { width: 18px; height: 4px; border-radius: 99px; background: var(--line); transition: background .2s, width .35s cubic-bezier(.2, .8, .3, 1); }
 .steps i.on { background: var(--accent); }
+.steps i.cur { width: 30px; }
 .btn.small { height: 30px; padding: 0 10px; font-size: 13px; color: var(--dim); }
 
-.step { display: flex; flex-direction: column; gap: 16px; padding: 12px 20px 4px; }
-.step h2 { font-size: 20px; letter-spacing: -.02em; }
-.step .hint { margin-top: 4px; }
-.step .lead { color: var(--text); font-size: 15px; line-height: 1.55; }
-.step .toggles { display: flex; flex-direction: column; gap: 14px; }
+.setup .step { display: flex; flex-direction: column; gap: 16px; padding: 12px 20px 4px; }
+.setup .step h2 { font-size: 20px; letter-spacing: -.02em; }
+.setup .step .hint { margin-top: 4px; }
+.setup .step .lead { color: var(--text); font-size: 15px; line-height: 1.55; }
+.setup .step .toggles { display: flex; flex-direction: column; gap: 14px; }
 .mark.big { width: 56px; height: 56px; border-radius: 15px; }
 .mark.big .ic { width: 32px; height: 32px; }
 .setup-board { width: min(100%, 264px); align-self: center; }
@@ -947,6 +989,21 @@ textarea[readonly] { color: var(--dim); }
 .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 13px; }
 .keys dt { color: var(--text); font-weight: 500; white-space: nowrap; }
 .keys dd { margin: 0; color: var(--dim); }
+
+/* ---------- appearing ---------- */
+
+/* tab pages, mode panels, online steps and draw offers fade up from 8px below when they're shown.
+   @starting-style = what the transition starts from when an element goes from hidden to shown.
+   (the reduced-motion rule at the bottom turns transitions off, so this goes too) */
+main > section, #net-setup, #net-game, #host-step2, #join-step2, .side > .stack, #review-body, #bot-stepper, .callout {
+  transition: opacity .3s ease, translate .3s cubic-bezier(.2, .8, .3, 1);
+}
+@starting-style {
+  main > section, #net-setup, #net-game, #host-step2, #join-step2, .side > .stack, #review-body, #bot-stepper, .callout {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
 
 /* ---------- toast ---------- */
 

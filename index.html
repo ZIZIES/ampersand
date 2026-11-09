@@ -61,7 +61,7 @@
       <button data-tab="online"><svg class="ic"><use href="#i-globe"/></svg>online</button>
       <button data-tab="bot"><svg class="ic"><use href="#i-bot"/></svg>bot</button>
     </nav>
-    <button id="settings-open" class="btn icon ghost gear" title="settings" aria-label="settings"><svg class="ic"><use href="#i-settings"/></svg></button>
+    <button id="settings-open" class="btn icon ghost gear" title="settings" aria-label="settings" aria-expanded="false" aria-controls="settings"><svg class="ic"><use href="#i-settings"/></svg></button>
   </header>
 
   <main>
@@ -361,6 +361,7 @@
 
   <!-- first-visit setup. the toggles are copied in from the settings drawer by app.js -->
   <dialog id="setup" class="setup" aria-labelledby="setup-title">
+   <div class="setup-card">
     <div class="setup-head">
       <div class="steps" aria-hidden="true"></div>
       <button id="setup-skip" type="button" class="btn ghost small">skip setup</button>
@@ -424,6 +425,7 @@
       <button id="setup-back" type="button" class="btn ghost"><svg class="ic"><use href="#i-prev"/></svg>back</button>
       <button id="setup-next" type="button" class="btn primary"><span class="t">next</span><svg class="ic"><use href="#i-next"/></svg></button>
     </div>
+   </div>
   </dialog>
 
   <div id="toast" role="status" aria-live="polite"></div>

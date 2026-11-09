@@ -11,6 +11,7 @@ import { settings, setSetting, onSetting, applyTheme, resetSettings, THEMES } fr
 const $ = (s) => document.querySelector(s);
 const colorName = (c) => (c === 'w' ? 'white' : 'black');
 const other = (c) => (c === 'w' ? 'b' : 'w');
+const motionOK = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 applyTheme();
 
@@ -74,12 +75,28 @@ function tcPicker(container, key, onChange) {
 }
 
 // ---------- tabs ----------
+// a highlight ("pill") sits behind the active tab and slides to whichever you pick
+const tabsNav = $('nav.tabs');
+const pill = document.createElement('span');
+pill.className = 'pill';
+tabsNav.prepend(pill);
+tabsNav.classList.add('has-pill');
+function placePill() {
+  const b = tabsNav.querySelector('button.active');
+  pill.style.width = b.offsetWidth + 'px';
+  pill.style.translate = `${b.offsetLeft}px 0`;
+}
+placePill();
+pill.getBoundingClientRect(); // commit the first position before turning the slide on, so it doesn't slide in from 0
+tabsNav.classList.add('pill-ready');
+new ResizeObserver(placePill).observe(tabsNav); // window resizes, the web font loading in
 document.querySelectorAll('nav [data-tab]').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('nav [data-tab]').forEach((b) => b.classList.toggle('active', b === btn));
     document.querySelectorAll('main > section').forEach((sec) => {
       sec.hidden = sec.dataset.tab !== btn.dataset.tab;
     });
+    placePill();
   });
 });
 
@@ -762,6 +779,7 @@ const bot = (() => {
     drawer.classList.toggle('open', yes);
     scrim.classList.toggle('open', yes);
     drawer.inert = !yes;
+    $('#settings-open').setAttribute('aria-expanded', String(yes));
     if (yes) $('#settings-close').focus();
   }
   $('#settings-open').addEventListener('click', () => open(true));
@@ -816,6 +834,7 @@ const bot = (() => {
 // a few steps over the main settings, shown once. skip (or escape) keeps the defaults.
 {
   const dlg = $('#setup');
+  const card = dlg.querySelector('.setup-card');
   const steps = [...dlg.querySelectorAll('.step')];
   const dots = dlg.querySelector('.steps');
   dots.replaceChildren(...steps.map(() => document.createElement('i')));
@@ -827,32 +846,56 @@ const bot = (() => {
   onSetting(() => { if (dlg.open) preview.render(); });
 
   function show(n) {
+    const dir = Math.sign(n - at); // 1 = forward, -1 = back, 0 = (re)opening
     at = Math.max(0, Math.min(steps.length - 1, n));
     steps.forEach((s, i) => { s.hidden = i !== at; });
-    [...dots.children].forEach((d, i) => d.classList.toggle('on', i <= at));
+    [...dots.children].forEach((d, i) => {
+      d.classList.toggle('on', i <= at);
+      d.classList.toggle('cur', i === at);
+    });
+    // next slides the new step in from the right, back from the left
+    if (dir && motionOK()) {
+      steps[at].animate([{ opacity: 0, translate: `${dir * 28}px 0` }, { opacity: 1, translate: '0 0' }],
+        { duration: 280, easing: 'cubic-bezier(.2, .8, .3, 1)' });
+    }
     const last = at === steps.length - 1;
     $('#setup-back').hidden = at === 0;
     $('#setup-next').hidden = last;
     $('#setup-skip').hidden = last;
     $('#setup-next .t').textContent = at === 0 ? "let's go" : 'next';
     if (steps[at].dataset.step === 'board') preview.render();
-    dlg.scrollTop = 0;
+    card.scrollTop = 0;
     (last ? dlg.querySelector('.start') : $('#setup-next')).focus();
   }
 
   function open() {
+    if (dlg.open) return;
     preview.game = new Chess();
     preview.reset();
     preview.render();
     dlg.showModal();
+    at = 0;
     show(0);
   }
 
+  // fades out (dialog + backdrop), then closes. the page underneath already shows the picked tab
+  let closing = false;
   function finish(tab) {
+    if (closing || !dlg.open) return;
     setSetting('setupDone', true);
     preview.reset(); // drops a half-finished drag or an open promotion picker
-    dlg.close();
     if (tab) $(`nav [data-tab="${tab}"]`).click();
+    if (!motionOK()) return dlg.close();
+    closing = true;
+    const opts = { duration: 200, easing: 'ease-in', fill: 'forwards' };
+    const anims = [card.animate([{ opacity: 1 }, { opacity: 0, translate: '0 10px', scale: '.98' }], opts)];
+    try { anims.push(dlg.animate([{ opacity: 1 }, { opacity: 0 }], { ...opts, pseudoElement: '::backdrop' })); } catch { /* no backdrop animation */ }
+    const done = () => {
+      dlg.close();
+      anims.forEach((x) => x.cancel()); // drop the faded-out end state so the next open starts clean
+      closing = false;
+    };
+    anims[0].finished.then(done, done);
   }
 
   $('#setup-next').addEventListener('click', () => show(at + 1));
