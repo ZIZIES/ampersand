@@ -728,6 +728,9 @@ textarea[readonly] { color: var(--dim); }
 .range-ends { display: flex; justify-content: space-between; color: var(--faint); font-size: 12px; }
 
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.seg.two { grid-template-columns: 1fr 1fr; }
+.seg button .ic { width: 15px; height: 15px; }
+.field-label .pip { width: 10px; height: 10px; }
 .seg button {
   display: flex;
   align-items: center;
@@ -995,11 +998,13 @@ textarea[readonly] { color: var(--dim); }
 /* tab pages, mode panels, online steps and draw offers fade up from 8px below when they're shown.
    @starting-style = what the transition starts from when an element goes from hidden to shown.
    (the reduced-motion rule at the bottom turns transitions off, so this goes too) */
-main > section, #net-setup, #net-game, #host-step2, #join-step2, .side > .stack, #review-body, #bot-stepper, .callout {
+main > section, #net-setup, #net-game, #host-step2, #join-step2, .side > .stack, #review-body, #bot-stepper, .callout,
+#bot-play-opts, #bot-watch-opts {
   transition: opacity .3s ease, translate .3s cubic-bezier(.2, .8, .3, 1);
 }
 @starting-style {
-  main > section, #net-setup, #net-game, #host-step2, #join-step2, .side > .stack, #review-body, #bot-stepper, .callout {
+  main > section, #net-setup, #net-game, #host-step2, #join-step2, .side > .stack, #review-body, #bot-stepper, .callout,
+#bot-play-opts, #bot-watch-opts {
     opacity: 0;
     translate: 0 8px;
   }

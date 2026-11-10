@@ -47,8 +47,9 @@ export function describe(rating) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// pick the bot's move. msLeft/inc = bot's clock (null when untimed)
-export async function botMove(fen, rating, { msLeft = null, inc = 0 } = {}) {
+// pick the bot's move. msLeft/inc = bot's clock (null when untimed).
+// humanDelay: pause a bit before answering so it doesn't feel instant (off for fast bot vs bot)
+export async function botMove(fen, rating, { msLeft = null, inc = 0, humanDelay = true } = {}) {
   const started = performance.now();
   let move;
   if (rating < SF_MIN_ELO) {
@@ -65,7 +66,7 @@ export async function botMove(fen, rating, { msLeft = null, inc = 0 } = {}) {
     move = uciToMove(res.bestmove);
   }
   // don't snap back instantly, it feels more like a person (skipped for max)
-  if (rating < MAX_RATING) {
+  if (humanDelay && rating < MAX_RATING) {
     let delay = 450 + Math.random() * 900;
     if (msLeft != null) delay = Math.min(delay, msLeft / 40);
     const wait = delay - (performance.now() - started);

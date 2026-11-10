@@ -12,6 +12,7 @@ const $ = (s) => document.querySelector(s);
 const colorName = (c) => (c === 'w' ? 'white' : 'black');
 const other = (c) => (c === 'w' ? 'b' : 'w');
 const motionOK = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 applyTheme();
 
@@ -409,7 +410,8 @@ const bot = (() => {
   });
   match.waitText = 'bot is thinking…';
   const HINT_COLOR = '#3fae5a';
-  let rating = settings.botRating;
+  let ratings = {};       // this game's bot rating per color: { b: 1200 } vs you, { w, b } bot vs bot
+  let paused = false;     // bot vs bot only
   let thinkToken = 0;
   let evalToken = 0;
   let review = null;      // { hist, data, index } while the review panel is open
@@ -422,28 +424,67 @@ const bot = (() => {
   }
 
   // ----- setup -----
-  const slider = $('#bot-rating');
-  slider.min = MIN_RATING;
-  slider.max = MAX_RATING;
-  slider.step = 50;
-  slider.value = settings.botRating;
+  const watching = () => settings.botMode === 'watch';
+
+  // a 400..max strength slider bound to a settings key; returns a reader for its value
+  function ratingSlider(id, key) {
+    const input = $('#' + id);
+    const num = $(`#${id}-num`), desc = $(`#${id}-desc`);
+    input.min = MIN_RATING;
+    input.max = MAX_RATING;
+    input.step = 50;
+    input.value = settings[key];
+    const sync = () => {
+      const r = Number(input.value);
+      num.textContent = r >= MAX_RATING ? 'max' : r;
+      desc.textContent = describe(r);
+      input.style.setProperty('--pct', ((r - MIN_RATING) / (MAX_RATING - MIN_RATING)) * 100 + '%');
+      syncNames();
+    };
+    input.addEventListener('input', sync);
+    input.addEventListener('change', () => setSetting(key, Number(input.value)));
+    queueMicrotask(sync); // after the other sliders exist
+    return () => Number(input.value);
+  }
+  const playRating = ratingSlider('bot-rating', 'botRating');
+  const watchRating = { w: ratingSlider('watch-w', 'watchW'), b: ratingSlider('watch-b', 'watchB') };
 
   function previewColor() {
-    return settings.botColor === 'b' ? 'b' : 'w';
+    return !watching() && settings.botColor === 'b' ? 'b' : 'w';
   }
-  function syncPreview() {
-    rating = Number(slider.value);
-    $('#bot-rating-num').textContent = rating >= MAX_RATING ? 'max' : rating;
-    $('#bot-rating-desc').textContent = describe(rating);
-    slider.style.setProperty('--pct', ((rating - MIN_RATING) / (MAX_RATING - MIN_RATING)) * 100 + '%');
-    if (!panels.setup.hidden) {
+  // names on the bars while the setup panel is up
+  function syncNames() {
+    if (panels.setup.hidden) return;
+    if (watching()) {
+      col.querySelector('.bar-w .name').textContent = botName(watchRating.w());
+      col.querySelector('.bar-b .name').textContent = botName(watchRating.b());
+    } else {
       const me = previewColor();
       col.querySelector(`.bar-${me} .name`).textContent = 'you';
-      col.querySelector(`.bar-${other(me)} .name`).textContent = botName(rating);
+      col.querySelector(`.bar-${other(me)} .name`).textContent = botName(playRating());
     }
   }
-  slider.addEventListener('input', syncPreview);
-  slider.addEventListener('change', () => setSetting('botRating', Number(slider.value)));
+
+  // you vs bot / bot vs bot
+  const modeBtns = [...document.querySelectorAll('#bot-mode [data-mode]')];
+  function syncMode() {
+    const w = watching();
+    modeBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === settings.botMode)));
+    $('#bot-play-opts').hidden = w;
+    $('#bot-watch-opts').hidden = !w;
+    $('#bot-setup-title').textContent = w ? 'bot vs bot' : 'play the bot';
+    $('#bot-start .t').textContent = w ? 'watch' : 'play';
+    $('#bot-start use').setAttribute('href', w ? '#i-play' : '#i-bot');
+  }
+  modeBtns.forEach((b) => b.addEventListener('click', () => {
+    setSetting('botMode', b.dataset.mode);
+    syncMode();
+    if (!panels.setup.hidden) showSetup();
+  }));
+
+  const speedBtns = [...document.querySelectorAll('#watch-speed [data-speed]')];
+  const syncSpeed = () => speedBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.speed === settings.watchSpeed)));
+  speedBtns.forEach((b) => b.addEventListener('click', () => { setSetting('watchSpeed', b.dataset.speed); syncSpeed(); }));
 
   const colorBtns = [...document.querySelectorAll('#bot-color [data-color]')];
   function syncColor() {
@@ -458,6 +499,7 @@ const bot = (() => {
 
   function showSetup() {
     cancelThink();
+    clearPause();
     leaveReview();
     match.game = null; // board stays inert until you press play
     match.over = false;
@@ -469,40 +511,63 @@ const bot = (() => {
     match.clock.reset(parseTC(settings.botTc));
     board.render();
     show('setup');
-    syncPreview();
+    syncMode();
+    syncNames();
     drawEval({ type: 'cp', value: 0 });
   }
 
   $('#bot-start').addEventListener('click', () => {
-    const me = settings.botColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : settings.botColor;
     reviewCache = null;
+    clearPause();
     show('play');
-    $('#bot-title').textContent = `vs ${botName(rating)}`;
-    match.start({ me, tc: parseTC(settings.botTc), themName: botName(rating), banner: `game on · you're ${colorName(me)}` });
-    if (me === 'b') think();
+    const tc = parseTC(settings.botTc);
+    const w = watching();
+    $('#bot-play-btns').hidden = w;
+    $('#bot-play-hint').hidden = w;
+    $('#bot-watch-btns').hidden = !w;
+    if (w) {
+      ratings = { w: watchRating.w(), b: watchRating.b() };
+      const names = { w: botName(ratings.w), b: botName(ratings.b) };
+      $('#bot-title').textContent = `${names.w} vs ${names.b}`;
+      match.start({ me: null, names, tc, banner: 'bot vs bot' });
+      think();
+    } else {
+      const me = settings.botColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : settings.botColor;
+      ratings = { [other(me)]: playRating() };
+      const name = botName(ratings[other(me)]);
+      $('#bot-title').textContent = `vs ${name}`;
+      match.start({ me, tc, themName: name, banner: `game on · you're ${colorName(me)}` });
+      if (me === 'b') think();
+    }
   });
 
-  // ----- the bot's turn -----
+  // ----- the bot's turn (when watching, whichever side is to move) -----
+  // bot vs bot speed: least time per move in ms, and whether bots add their "human" pause
+  const SPEED = { slow: { min: 1800, human: true }, normal: { min: 0, human: true }, fast: { min: 300, human: false } };
   async function think() {
     const g = match.game;
-    if (!g || match.over || g.turn() === match.me) return;
+    if (!g || match.over || paused || g.turn() === match.me) return;
     const token = ++thinkToken;
-    const fen = g.fen();
+    const fen = g.fen(), turn = g.turn();
+    const speed = match.me ? SPEED.normal : SPEED[settings.watchSpeed] || SPEED.normal;
+    const started = performance.now();
     syncButtons();
     let mv;
     try {
       const clock = match.clock;
-      mv = await botMove(fen, rating, {
-        msLeft: clock.enabled ? clock.left(match.them) : null,
-        inc: clock.tc?.inc || 0,
-      });
+      const msLeft = clock.enabled ? clock.left(turn) : null;
+      mv = await botMove(fen, ratings[turn], { msLeft, inc: clock.tc?.inc || 0, humanDelay: speed.human });
+      let wait = speed.min - (performance.now() - started);
+      if (msLeft != null) wait = Math.min(wait, msLeft / 40); // don't let "slow" lose on time
+      if (wait > 0) await sleep(wait);
     } catch (e) {
       toast('engine error: ' + e.message);
       return;
     }
-    if (token !== thinkToken || match.over || match.game !== g || g.fen() !== fen) return;
-    if (!mv || !match.receive(mv)) toast('the bot got confused, try a new game');
+    if (token !== thinkToken || match.over || paused || match.game !== g || g.fen() !== fen) return;
+    if (!mv || !match.receive(mv)) return toast('the bot got confused, try a new game');
     syncButtons();
+    if (!match.me) think(); // the other bot's turn
   }
   function cancelThink() {
     thinkToken++;
@@ -515,6 +580,7 @@ const bot = (() => {
   function syncButtons() {
     const g = match.game;
     const live = g && !match.over;
+    $('#watch-pause').disabled = !live;
     $('#bot-hint').disabled = !(live && g.turn() === match.me);
     $('#bot-takeback').disabled = !g || !g.history({ verbose: true }).some((m) => m.color === match.me);
     $('#bot-resign').disabled = !live;
@@ -560,8 +626,44 @@ const bot = (() => {
 
   $('#bot-new').addEventListener('click', showSetup);
 
+  // ----- bot vs bot controls -----
+  function pauseButton() {
+    const btn = $('#watch-pause');
+    btn.querySelector('.t').textContent = paused ? 'resume' : 'pause';
+    btn.querySelector('use').setAttribute('href', paused ? '#i-play' : '#i-pause');
+  }
+  // forget the pause without touching the game (leaving it, or starting a new one)
+  function clearPause() {
+    paused = false;
+    pauseButton();
+  }
+  function setPaused(p) {
+    paused = p;
+    pauseButton();
+    const g = match.game;
+    if (!g || match.over || match.me) return;
+    if (p) {
+      cancelThink();
+      match.clock.stop();
+      match.setStatus('paused', '', g.turn());
+    } else {
+      if (g.history().length) match.clock.resume(g.turn()); // clocks start after white's first move
+      match.renderStatus();
+      think();
+    }
+  }
+  $('#watch-pause').addEventListener('click', () => setPaused(!paused));
+  $('#watch-flip').addEventListener('click', () => {
+    board.flip();
+    col.dataset.orient = board.orientation;
+    drawEval(lastScore);
+  });
+  $('#watch-new').addEventListener('click', showSetup);
+
   // ----- eval bar -----
+  let lastScore = { type: 'cp', value: 0 };
   function drawEval(score) {
+    lastScore = score;
     const bar = $('#bot-eval');
     bar.hidden = !settings.evalBar;
     const pct = winPct(score); // white's share
@@ -648,12 +750,14 @@ const bot = (() => {
 
   function buildReview() {
     const { data, hist } = review;
-    const me = match.me, them = other(me);
+    // columns: you + the bot, or white + black when you watched
+    const [a, b] = match.me ? [match.me, other(match.me)] : ['w', 'b'];
+    const head = (c) => (c === match.me ? 'you' : botName(ratings[c]));
     const s = data.summary;
     const row = (label, key, fmt = (v) => v) =>
-      `<tr><td>${label}</td><td>${fmt(s[me][key])}</td><td>${fmt(s[them][key])}</td></tr>`;
+      `<tr><td>${label}</td><td>${fmt(s[a][key])}</td><td>${fmt(s[b][key])}</td></tr>`;
     $('#review-summary').innerHTML =
-      `<thead><tr><th></th><th>you</th><th>${botName(rating)}</th></tr></thead><tbody>` +
+      `<thead><tr><th></th><th>${head(a)}</th><th>${head(b)}</th></tr></thead><tbody>` +
       row('accuracy', 'accuracy', (v) => (v == null ? '–' : v + '%')) +
       row('<i class="tag inaccuracy">?!</i> inaccuracies', 'inaccuracy') +
       row('<i class="tag mistake">?</i> mistakes', 'mistake') +
@@ -765,6 +869,7 @@ const bot = (() => {
   });
 
   syncColor();
+  syncSpeed();
   showSetup();
   return { board, refreshEval };
 })();

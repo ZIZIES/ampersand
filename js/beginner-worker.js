@@ -4,7 +4,7 @@
 //  - mid ratings see your reply but not deeper exchanges
 //  - every move's score gets random noise, then a weighted-random pick among the candidates
 // message in: { id, fen, rating }   message out: { id, move: { from, to, promotion } | null }
-import { Chess } from 'https://cdn.jsdelivr.net/npm/chess.js@1/+esm';
+import { Chess } from '../vendor/chess.js/chess.js'; // workers can't use the page's importmap
 
 const VAL = { p: 100, n: 300, b: 315, r: 500, q: 900, k: 0 };
 const MATE = 100_000;

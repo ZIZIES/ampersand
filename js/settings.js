@@ -21,6 +21,10 @@ const DEFAULTS = {
   botColor: 'w',        // 'w' | 'b' | 'random'
   botTc: 'none',
   evalBar: true,        // bot games: show who's winning
+  botMode: 'play',      // bot tab: 'play' (you vs bot) | 'watch' (bot vs bot)
+  watchW: 1200,         // bot vs bot: white bot's rating
+  watchB: 1600,         // bot vs bot: black bot's rating
+  watchSpeed: 'normal', // bot vs bot: 'slow' | 'normal' | 'fast'
   setupDone: false,     // finished or skipped the first-visit setup
 };
 
