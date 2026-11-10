@@ -1,6 +1,7 @@
 # ampersand
 
 play it: **https://zizies.github.io/ampersand/**
+or: **https://ampersand-gules.vercel.app/**
 
 chess in the browser. static page, no build step, plain js + es modules. hosted on github pages straight from `main` (the empty `.nojekyll` file tells pages to serve the files as-is).
 
